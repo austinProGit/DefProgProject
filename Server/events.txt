@@ -1,0 +1,24 @@
+name: County Fair
+date: 01/01/22
+location: Albany, NY
+ticket price: 15
+
+name: Flea Market
+date: 05/20/22
+location: Columbus, GA
+ticket price: 15
+
+name: Downtown Concert
+date: 09/21/22
+location: Charleston, SC
+ticket price: 20
+
+name: Art Exhibit
+date: 10/19/22
+location: Mobile, AL
+ticket price: 30
+
+name: Pink Floyd Concert
+date: 07/05/22
+location: Riverton, WY
+ticket price: 15
