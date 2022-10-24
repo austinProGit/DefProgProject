@@ -1,5 +1,5 @@
 # first of all import the socket library
-import socket   
+import socket
 import re         
 # from DefProgProject.user import *
 from user import *
@@ -97,9 +97,7 @@ def validate_credentials(username, password):
       print('User failed to validate')
   return validated
 
-def load_user():
-  entered_username = input('Please enter a username.')
-  entered_password = input('Please enter a password.')
+def load_user(entered_username, entered_password):
   print('About to execute if')
   if validate_credentials(entered_username, entered_password):
     print('about to instantiate user')
@@ -116,24 +114,65 @@ def display_events():
     f.close()
 
 #method to send a string to specified client
-def send_string_server(client, string):
-  client.send(string.encode()) # Encode and send to client
+def send_string_to_client(client, message):
+  client.send(message.encode()) # Encode and send to client
 
 
 # method to receive string from specified client
-def receive_string_server(client):
+def receive_string_from_client(client):
   # (NEED TO TEST IF RECV SIZE OF 1024 IS SUFICIENT FOR ALL STRING SIZES WE WILL USE)
   data = client.recv(1024).decode()  # receive response and decode
   print('Received from client: ' + data)  # display received message
+  return data
 
+def make_client_disconnect(client):
+  send_string_to_client(client, "kill")
 
-def main():
+#Testing client interaction, specifically the first login menu
+def client_server_interaction_test():
   client = server_setup()
   main_menu = "\n1.View Events\n2.Purchase Tickets\n3.View Points\n4.Add Points\n5.Exit"
-  send_string_server(client, main_menu)
+  login_menu = "\n1.Sign-Up\n2.Log-In\n5.Exit"
+
+  while True:
+    send_string_to_client(client, login_menu)
+    client_input = receive_string_from_client(client)
+
+    #Client creating a new User
+    if client_input == "1":
+      send_string_to_client(client, "Enter a username")
+      client_username = receive_string_from_client(client)
+      send_string_to_client(client, "Enter a password")
+      client_password = receive_string_from_client(client)
+      input_new_user(client_username,client_password)
+      #You would load the user here
+      break
+
+    #Client logging in as existing user
+    elif client_input == "2":
+      send_string_to_client(client, "Enter a username")
+      client_username = receive_string_from_client(client)
+      send_string_to_client(client, "Enter a password")
+      client_password = receive_string_from_client(client)
+
+      #Check if user successfully validates
+      if validate_credentials(client_username, client_password):
+        load_user(client_username, client_password)
+        send_string_to_client(client, "LOGGED IN, press ENTER to continue")
+        #exit loop if valid just for testing
 
 
-main()
+      #POTENTIAL BUG WE CAN PUT IN OUR CODE, WHEN PROMTED WITH THIS AS CLENT; INPUT A VALUE INSTEAD OF JUST PRESSING ENTER
+      send_string_to_client(client, "Invalid username or password, press ENTER to continue")
+
+    #if client desides to exit, close connection
+    elif client_input == "5":
+      make_client_disconnect(client)
+
+
+  print("Server is shutdown")
+
+client_server_interaction_test()
 
 # validate_credentials()
 # create_user()

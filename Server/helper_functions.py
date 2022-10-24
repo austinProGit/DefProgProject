@@ -1,6 +1,6 @@
 def parse_user(username):
   user_line = ''
-  with open('users.txt') as f: #change 'users.txt' back to 'server/users.txt', I had to change it to run on my PC
+  with open('server/users.txt') as f:
     lines = f.readlines()
     for line in lines:
       if line.find(username) != -1:
