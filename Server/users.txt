@@ -1,3 +1,4 @@
 user1,password1,0,
-user2,pass2,0,
 Bob,abc123,0,
+user3,kpass3,0,
+Username: user2, Points: 50, Events: 

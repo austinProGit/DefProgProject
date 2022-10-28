@@ -5,7 +5,7 @@ class User:
         user_line = parse_user(username)
         delimiters = find_delimiters(user_line)
         self.username = username
-        self.points = user_line[delimiters[1] + 1:delimiters[2]]
+        self.points = int(user_line[delimiters[1] + 1:delimiters[2]])
         self.events = user_line[delimiters[2] + 1:user_line.find('\n')]
 
     # def __init__(self, username, points = None, events = None):
@@ -18,8 +18,11 @@ class User:
     def display_points(self):
         print(self.points)
 
+    def add_points(self, points_to_add):
+        self.points += points_to_add
+
     def __str__(self):
-        print('username: ', self.username,'\n','points: ', self.points, '\n', 'events: ', self.events, '\n')
+        return f'Username: {self.username}, Points: {self.points}, Events: {self.events}\n'
 
 # def parse_user(username):
 #   user_line = ''

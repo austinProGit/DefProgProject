@@ -1,9 +1,11 @@
 # first of all import the socket library
+from pydoc import cli
 import socket
 import re         
 # from DefProgProject.user import *
 from user import *
 from helper_functions import *
+import os
 
 
 def create_user():
@@ -42,15 +44,15 @@ def server_setup():
   # this makes the server listen to requests
   # coming from other computers on the network
   s.bind(('', port))
-  print("socket binded to %s" % (port))
+  # print("socket binded to %s" % (port))
 
   # put the socket into listening mode
   s.listen(5)
-  print("socket is listening")
+  # print("socket is listening")
 
   # Establish connection with client.
   c, addr = s.accept()
-  print('Got connection from', addr)
+  # print('Got connection from', addr)
 
   #return the client
   return c
@@ -73,7 +75,7 @@ def create_user_test():
     # else:
     #   print('Please enter a valid password.')
     seeking_password = False #Just for testing purposes
-  print('about to add to user_info')
+  #print('about to add to user_info')
   input_new_user(entered_username, entered_password)
 
 def input_new_user(username, password):
@@ -98,14 +100,22 @@ def validate_credentials(username, password):
   return validated
 
 def load_user(entered_username, entered_password):
-  print('About to execute if')
+  current_user = None
+  # print('About to validate user')
   if validate_credentials(entered_username, entered_password):
-    print('about to instantiate user')
+    # print('about to instantiate user')
     current_user = User(entered_username)
-    print('about to execute toString()')
-    current_user.__str__()
+    # print('about to execute toString()')
+    # current_user.__str__()
+  else:
+    print('Unable to load user.')
+  return current_user
   # asks the user for username/password
   # if validated, creates a new user object from the entered information
+
+def add_points(user, points_to_add):
+  user.add_points(points_to_add)
+  print(f'You have added {add_points} points and now have {user.points}')
 
 def display_events():
   with open('server/events.txt') as f:
@@ -117,6 +127,10 @@ def display_events():
 def send_string_to_client(client, message):
   client.send(message.encode()) # Encode and send to client
 
+#method to send string to specified client with response character on end of message
+def send_string_expect_response(client, message):
+  # client.send(message+u"\u0003".encode())
+  client.send((message+"\u2404").encode())
 
 # method to receive string from specified client
 def receive_string_from_client(client):
@@ -129,50 +143,122 @@ def make_client_disconnect(client):
   send_string_to_client(client, "kill")
 
 #Testing client interaction, specifically the first login menu
-def client_server_interaction_test():
-  client = server_setup()
-  main_menu = "\n1.View Events\n2.Purchase Tickets\n3.View Points\n4.Add Points\n5.Exit"
+def client_server_login_menu():
+  
+  #this was for testing
   login_menu = "\n1.Sign-Up\n2.Log-In\n5.Exit"
 
   while True:
-    send_string_to_client(client, login_menu)
+    send_string_expect_response(client, login_menu)
     client_input = receive_string_from_client(client)
 
     #Client creating a new User
     if client_input == "1":
-      send_string_to_client(client, "Enter a username")
+      send_string_expect_response(client, "Enter a username")
       client_username = receive_string_from_client(client)
-      send_string_to_client(client, "Enter a password")
+      send_string_expect_response(client, "Enter a password")
       client_password = receive_string_from_client(client)
       input_new_user(client_username,client_password)
-      #You would load the user here
       break
 
     #Client logging in as existing user
     elif client_input == "2":
-      send_string_to_client(client, "Enter a username")
+      send_string_expect_response(client, "Enter a username")
       client_username = receive_string_from_client(client)
-      send_string_to_client(client, "Enter a password")
+      send_string_expect_response(client, "Enter a password")
       client_password = receive_string_from_client(client)
 
       #Check if user successfully validates
       if validate_credentials(client_username, client_password):
-        load_user(client_username, client_password)
-        send_string_to_client(client, "LOGGED IN, press ENTER to continue")
+        send_string_to_client(client, "LOGGED IN")
+        break
         #exit loop if valid just for testing
 
-
-      #POTENTIAL BUG WE CAN PUT IN OUR CODE, WHEN PROMTED WITH THIS AS CLENT; INPUT A VALUE INSTEAD OF JUST PRESSING ENTER
-      send_string_to_client(client, "Invalid username or password, press ENTER to continue")
+      # POTENTIAL BUG WE CAN PUT IN OUR CODE, WHEN PROMTED WITH THIS AS CLENT; INPUT A VALUE INSTEAD OF JUST PRESSING ENTER
+      send_string_to_client(client, "Invalid username or password")
 
     #if client desides to exit, close connection
     elif client_input == "5":
       make_client_disconnect(client)
+    
+  return load_user(client_username, client_password)
+
+def shutdown(user, client):
+  # open user file, find the line where the user's old info is
+  # overwrite that old line, close user file
+  # break server connection
+  print('executing the shutdown function')
+  try:
+    with open('server/users.txt') as f:
+      print('successfully got past the as f line')
+      with open('server/users.tmp.txt', 'w') as ft:
+        print('successfully got past the as ft line')
+        lines = f.readlines()
+        print(lines)
+        for line in lines:
+          if line.find(user.username) == -1:
+            ft.write(line)
+          else:
+            print('Found the user info')
+            print(line)
+        ft.write(str(user))
+      ft.close()
+    f.close()
+    os.remove('server/users.txt')
+    os.rename('server/users.tmp.txt', 'server/users.txt')
+  except Exception as err:
+    print(f'Error: {err}')
+  make_client_disconnect(client)
 
 
-  print("Server is shutdown")
+def client_server_main_menu():
+  #print('About to execute the user = line')
+  user = client_server_login_menu()
+  print('User has been instantiated: ' + str(user))
+  main_menu = "\n1.Display User Information\n2.Add Points\n3.Purchase Tickets\n4.Cancel Event\n5.Exit"
+  
+  while True:
+    send_string_expect_response(client, main_menu)
+    client_input = receive_string_from_client(client)
 
-client_server_interaction_test()
+    # print('about to execute if client_input == 1')
+    #Display User Information
+    if client_input == "1":
+      # print('entered client input 1 menu option')
+      send_string_to_client(client, str(user))
+      # print('Send the user string')
+      # print('send the main menu string')
+    elif client_input == "2":
+      send_string_expect_response(client, 'Please enter the number of points to add.')
+      points_to_add = int(receive_string_from_client(client))
+      user.points += points_to_add
+      print('Current user points: ')
+      user.display_points
+
+    # #Client logging in as existing user
+    # elif client_input == "2":
+    #   send_string_to_client(client, "Enter a username")
+    #   client_username = receive_string_from_client(client)
+    #   send_string_to_client(client, "Enter a password")
+    #   client_password = receive_string_from_client(client)
+
+    #   #Check if user successfully validates
+    #   if validate_credentials(client_username, client_password):
+    #     load_user(client_username, client_password)
+    #     send_string_to_client(client, "LOGGED IN, press ENTER to continue")
+    #     #
+
+    #   # POTENTIAL BUG WE CAN PUT IN OUR CODE, WHEN PROMTED WITH THIS AS CLENT; INPUT A VALUE INSTEAD OF JUST PRESSING ENTER
+    #   send_string_to_client(client, "Invalid username or password, press ENTER to continue")
+
+    #if client desides to exit, close connection
+    elif client_input == "5":
+      print('about to execute shutdown')
+      shutdown(user, client)
+      
+client = server_setup()
+client_server_main_menu()
+# print("Server is shutdown")
 
 # validate_credentials()
 # create_user()
