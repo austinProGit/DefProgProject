@@ -1,4 +1,4 @@
-user1,password1,0,
 Bob,abc123,0,
 user3,kpass3,0,
-Username: user2, Points: 50, Events: 
+user123,pass123,0,
+user2,pass2,20,name: Flea Market,date: 05/20/22,location: Columbus, GA,ticket price: 15:

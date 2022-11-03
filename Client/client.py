@@ -26,21 +26,24 @@ def receive_data():
     # print('Inside of receive_data')
     # print(s)
     data = s.recv(1024).decode()  # receive response and decode
-    # print('data')
+    # print(f'{data}')
     # print(f'data: {data}')  # display recieved message
     return data
 def check_if_response_req(data):
     # print('made it to the check_if_response_req function')
     # print(data)
     res_req = False
-    last_char = data[len(data) - 1]
-    # print(f'last char: {last_char}')
-    if last_char == "\u2404":
-        # print(f'Data before slice: {data}')
-        data = data[:-1]
-        # print(f'Data after slice: {data}')
-        res_req = True
-    print(f'{data}')
+    # print(f'Data received about to be processed is : {data}.')
+    if data:
+        last_char = data[len(data) - 1]
+        # print(f'last char: {last_char}')
+        if last_char == "\u2404":
+            # print(f'Data before slice: {data}')
+            data = data[:-1]
+            # print(f'Data after slice: {data}')
+            res_req = True
+        print(f'{data}')
+        # print('The check_if_response_req is activating')
     return res_req
 
 running = True
@@ -48,26 +51,17 @@ while running:
     # print('entered while loop')
     received_data = receive_data()
     # print(f'received data: {received_data}')
-    if check_if_response_req(received_data):
-        # print('activated if statement')
-        user_input = input("->")
-        send_string_to_server(user_input)
-    else:
-        # print('about to send empty string')
-        send_string_to_server('') 
-    # if received_string == "kill":
-    #     breaks
+    if received_data:
+        # print(f'If received_data activated. received_data: {received_data}')
+        if check_if_response_req(received_data):
+            # print('activated if statement')
+            user_input = input("->")
+            send_string_to_server(user_input)
+        else:
+            # print('about to send empty string')
+            send_string_to_server('') 
+        if received_data == 'Byebye':
+            sys.exit()    
 
-"""
-while True:
-    recvStr = recieve_string_from_server()
-    if recvStr == "1":
-         message = input("->")
-         send_string_to_server(message)
-    elif recvStr == "kill"
-        break
-
-"""
-# close the connection
 print("Client is shutdown")
 s.close()
